@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{%block body%}
+
+<!--
+<div style='backdrop-filter: blur(8px); margin: 5em;padding:0.3%;text-align:center'>
+    <h1>Удобный и современный инструмент для добавления и отслеживания ваших задач</h1>
+</div>
+-->
+
+<div style='margin-top: 3em;backdrop-filter: blur(8px); box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); margin-left:25%;margin-right:25%;padding-top:0.3%;padding-bottom:3%;text-align:center'>
+    <h3>Создать задачу</h3>
+    <form id="taskFormCreate">
+        <p><label>Название</label><br>
+        <input type="text" id="taskFormTitle"></p>
+        <p><label>Описание</label><br>
+        <input type="text" id="taskFormDescription"></p>
+        <button id="taskFormCreateBtn">Сохранить</button>
+    </form>
+    
+<button id="getTask", style="margin-top:5%">Показать задачи</button>
+</div>
+
+<div style='backdrop-filter: blur(8px); box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); margin-top:2%; margin-left:25%;margin-right:25%;padding-top:0.3%;padding-bottom:3%;text-align:center'>
+    <h3>Ваши задачи</h3>
+    <ul id="ulTask">
+
+    </ul>
+</div>
+
+
+<script>
+const reqGetListTask = 'http://127.0.0.1:8000/api/v1/tasks/list';
+const reqPostCreateTask = 'http://127.0.0.1:8000/api/v1/tasks/create';
+const taskObject = {
+    list_task: [],
+}
+
+const clickButton = document.getElementById('getTask');
+clickButton.addEventListener('click', renderTasks);
+
+function renderTasks(){
+    // Блок запроса и получения данных
+    
+    fetch(reqGetListTask).then(response=>response.json()).then(
+        tasks => {
+            const ulTask = document.getElementById('ulTask');
+            ulTask.innerHTML = ''
+            for(let i=0; i < tasks.length; i++){
+                element_li = document.createElement('li');
+                element_title = document.createElement('h3');
+                element_description = document.createElement('p');
+                // element_status = document.createElement('p');
+                element_button_delete = document.createElement('button');
+                element_button_update = document.createElement('button')
+                element_button_delete.textContent = 'Удалить задачу';
+                // element_button_update.textContent = 'Редактировать задачу';
+                element_button_delete.id = `delete_task_id=${tasks[i].id}`;
+                element_button_update.id = `update_task_id=${tasks[i].id}`
+                element_button_delete.addEventListener('click', function(event){
+                    url = 'http://127.0.0.1:8000/api/v1/tasks/delete' + '?' + this.id.slice(7,this.id.length);
+                    fetch(url, {
+                        method: 'DELETE'
+                    });
+                    renderTasks();
+                    renderTasks()
+                }) 
+                element_title.textContent = tasks[i].title;
+                element_description.textContent = tasks[i].description;
+                // element_status.textContent = tasks[i].status;
+                element_div = document.createElement('div');
+                element_div.append(element_title,
+                element_description,
+                // element_status,
+                element_button_delete);
+                element_li.append(element_div);
+                ulTask.append(element_li);
+            }
+        }
+    )
+}    
+const taskFormCreateBtn = document.getElementById('taskFormCreateBtn');
+taskFormCreateBtn.addEventListener('click', function(event) {
+    event.preventDefault();
+    let taskFormTitle = document.getElementById('taskFormTitle');
+    let taskFormDescription = document.getElementById('taskFormDescription');
+    if (taskFormTitle.value != '') {
+        data = {'title': taskFormTitle.value, 'description': taskFormDescription.value};
+        fetch(reqPostCreateTask, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+    }else{
+        alert('ВВЕДИТЕ ЗНАЧЕНИЕ!!!!!!!!!');
+        taskFormDescription.value = ''
+    }
+        taskFormTitle.value = '';
+        taskFormDescription.value = '';
+        renderTasks()
+})
+</script>
+
+{%endblock%}    
